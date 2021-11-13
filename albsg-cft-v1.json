@@ -1,0 +1,599 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "WebServerKey": {
+            "Description": "This Key will be used to SSH into EC2 instances",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        }
+    },
+    "Resources" : {
+        "VPC":{
+            "Type" : "AWS::EC2::VPC",
+            "Properties" : {
+                "CidrBlock" : "10.0.0.0/16",
+                "EnableDnsHostnames" : true,
+                "EnableDnsSupport" : true,
+                "InstanceTenancy" : "default",
+                "Tags" : [ {"Key" : "Name", "Value":"BlogVPC"} ]
+            }
+        },
+        "DMZ1Public" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "AvailabilityZone" : {"Fn::Select" : ["0",{"Fn::GetAZs":""}]},
+                "CidrBlock" : "10.0.0.0/24",
+                "MapPublicIpOnLaunch" : true,
+                "Tags" : [ {"Key" : "Name", "Value" : "DMZ1Public"} ],
+                "VpcId" : {"Ref" : "VPC"}
+            }
+        },
+        "DMZ2Public" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "AvailabilityZone" : {"Fn::Select" : ["1",{"Fn::GetAZs":""}]},
+                "CidrBlock" : "10.0.1.0/24",
+                "MapPublicIpOnLaunch" : true,
+                "Tags" : [ {"Key" : "Name", "Value" : "DMZ2Public"} ],
+                "VpcId" : {"Ref" : "VPC"}
+            }
+        },
+        "AppLayer1Private" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "AvailabilityZone" : {"Fn::Select" : ["0",{"Fn::GetAZs":""}]},
+                "CidrBlock" : "10.0.10.0/24",
+                "MapPublicIpOnLaunch" : false,
+                "Tags" : [ {"Key" : "Name", "Value" : "AppLayer1Private"} ],
+                "VpcId" : {"Ref" : "VPC"}
+            }
+        },
+        "AppLayer2Private" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "AvailabilityZone" : {"Fn::Select" : ["1",{"Fn::GetAZs":""}]},
+                "CidrBlock" : "10.0.11.0/24",
+                "MapPublicIpOnLaunch" : false,
+                "Tags" : [ {"Key" : "Name", "Value" : "AppLayer2Private"} ],
+                "VpcId" : {"Ref" : "VPC"}
+            }
+        },
+        "InternetGateway" : {
+            "Type" : "AWS::EC2::InternetGateway",
+            "Properties" : {
+                "Tags" : [ {"Key" : "Name", "Value" : "BlogIGW"} ]
+            }
+        },
+        "InternetGatewayAttachment" : {
+            "Type" : "AWS::EC2::VPCGatewayAttachment",
+            "Properties" : {
+                "InternetGatewayId" : {"Ref" : "InternetGateway"},
+                "VpcId" : {"Ref" : "VPC"}
+            }
+        },
+        "PublicRT" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "Properties" : {
+                "Tags" : [ {"Key" : "Name", "Value" : "Public-RT"} ],
+                "VpcId" : {"Ref" : "VPC"}
+            }
+        },
+        "PublicRTRoute" : {
+            "Type" : "AWS::EC2::Route",
+            "DependsOn" : "InternetGatewayAttachment",
+            "Properties" : {
+                "DestinationCidrBlock" : "0.0.0.0/0",
+                "GatewayId" : {"Ref" :"InternetGateway"},
+                "RouteTableId" : {"Ref" : "PublicRT"}
+            }
+        },
+        "PublicRTDMZ1Association" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "RouteTableId" : {"Ref" : "PublicRT"},
+                "SubnetId" : {"Ref" : "DMZ1Public"}
+            }
+        },
+        "PublicRTDMZ2Association" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "RouteTableId" : {"Ref" : "PublicRT"},
+                "SubnetId" : {"Ref" : "DMZ2Public"}
+            }
+        },
+        "DMZ2NatGW" : {
+            "Type" : "AWS::EC2::NatGateway",
+            "Properties" : {
+                "AllocationId" : { "Fn::GetAtt" : ["NatEIP", "AllocationId"]},
+                "SubnetId" : {"Ref" :"DMZ2Public"},
+                "Tags" : [ {"Key" : "Name",  "Value" :"NAT-GATEWAY"} ]
+            }
+        },
+        "NatEIP" : {
+            "Type" : "AWS::EC2::EIP",
+            "DependsOn" : "InternetGatewayAttachment",
+            "Properties" : {
+                "Domain" : "vpc",
+                "Tags" : [ {"Key" :"Name", "Value" : "Elastic-IP"} ]
+            }
+        },
+        "PrivateRT" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "Properties" : {
+                "Tags" : [ {"Key" : "Name", "Value" : "Private-RT"} ],
+                "VpcId" : {"Ref" : "VPC"}
+            }
+        },
+        "NATGatewayRoute" : {
+                "Type" : "AWS::EC2::Route",
+                "Properties" : {
+                    "DestinationCidrBlock" : "0.0.0.0/0",
+                    "NatGatewayId" : {"Ref" : "DMZ2NatGW"},
+                    "RouteTableId" : {"Ref" : "PrivateRT"}
+            }   
+        },
+        "AppLayer1PrivateSubnetAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "RouteTableId" : {"Ref" : "PrivateRT"},
+                "SubnetId" : {"Ref" : "AppLayer1Private"}
+            }
+        },
+        "AppLayer2PrivateSubnetAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "RouteTableId" : {"Ref" : "PrivateRT"},
+                "SubnetId" : {"Ref" : "AppLayer2Private"}
+            }
+        },
+        "ALBSG" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupName" : "LoadBalancer-SG",
+                "GroupDescription" : "WordPress-ALB",
+                "VpcId" : {"Ref" :"VPC"},
+                "SecurityGroupIngress" : [ 
+                    {
+                        "CidrIp" : "0.0.0.0/0",
+                        "FromPort" : 80,
+                        "IpProtocol" : "tcp",
+                        "ToPort" : 80
+                    },
+                    {
+                        "CidrIp" : "0.0.0.0/0",
+                        "FromPort" : 443,
+                        "IpProtocol" : "tcp",
+                        "ToPort" : 443
+                    }      
+                ],
+                "Tags" : [{"Key" : "Name", "Value" : "LoadBalancer-SG"}] 
+            }
+        },
+        "BastionHostSG": {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupName" : "BashtionHost-SG",
+                "GroupDescription" : "WordPress-ALB",
+                "VpcId" : {"Ref" :"VPC"},
+                "SecurityGroupIngress" : [ 
+                    {
+                        "CidrIp" : "0.0.0.0/0",
+                        "FromPort" : 22,
+                        "IpProtocol" : "tcp",
+                        "ToPort" : 22
+                    }
+                ],
+                "Tags" : [{"Key" : "Name", "Value" : "BashtionHost-SG"}]
+                
+            }
+        },
+        "AppServerSG": {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupName" : "AppLayer-SG",
+                "GroupDescription" : "WordPress-ALB",
+                "VpcId" : {"Ref" :"VPC"},
+                "SecurityGroupIngress" : [ 
+                    {
+                        "SourceSecurityGroupId" : {"Ref" : "BastionHostSG"},
+                        "FromPort" : 22,
+                        "IpProtocol" : "tcp",
+                        "ToPort" : 22
+                    },
+                    {
+                        "SourceSecurityGroupId" : {"Ref":"ALBSG"},
+                        "FromPort" : 80,
+                        "IpProtocol" : "tcp",
+                        "ToPort" : 80
+                    }
+                ],
+                "Tags" : [{"Key" : "Name", "Value" : "AppLayer-SG"}] 
+            }
+        },
+        "DMZPublicNACL" : {
+            "Type" : "AWS::EC2::NetworkAcl",
+            "Properties" : {
+                "Tags" : [ {"Key" : "Name", "Value" : "DMZ-Public-Subnets-NACL"} ],
+                "VpcId" : {"Ref" : "VPC"}
+            }
+        },
+        "DMZ1NACLAssociation" : {
+            "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+            "DependsOn" : "DMZPublicNACL",
+            "Properties" : {
+                "NetworkAclId" : {"Ref" : "DMZPublicNACL"},
+                "SubnetId" : {"Ref" : "DMZ1Public"}
+            }
+        },
+        "DMZ2NACLAssociation" : {
+            "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+            "DependsOn" : "DMZPublicNACL",
+            "Properties" : {
+                "NetworkAclId" : {"Ref" : "DMZPublicNACL"},
+                "SubnetId" : {"Ref" : "DMZ2Public"}
+            }
+        },
+        "DMZPublicSubnetsNACLIngress100" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "DMZPublicNACL", 
+            "Properties" : {
+                "CidrBlock" : "0.0.0.0/0",
+                "Egress" : false,
+                "NetworkAclId" : {"Ref" : "DMZPublicNACL"},
+                "PortRange" : {"From" : "22", "To" : "22"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "100"
+            }
+        },
+        "DMZPublicSubnetsNACLIngress110" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "DMZPublicNACL", 
+            "Properties" : {
+                "CidrBlock" : "0.0.0.0/0",
+                "Egress" : false,
+                "NetworkAclId" : {"Ref" : "DMZPublicNACL"},
+                "PortRange" : {"From" : "80", "To" : "80"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "110"
+            }
+        },
+        "DMZPublicSubnetsNACLIngress120" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "DMZPublicNACL", 
+            "Properties" : {
+                "CidrBlock" : "0.0.0.0/0",
+                "Egress" : false,
+                "NetworkAclId" : {"Ref" : "DMZPublicNACL"},
+                "PortRange" : {"From" : "443", "To" : "443"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "120"
+            }
+        },
+        "DMZPublicSubnetsNACLIngress130" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "DMZPublicNACL", 
+            "Properties" : {
+                "CidrBlock" : "0.0.0.0/0",
+                "Egress" : false,
+                "NetworkAclId" : {"Ref" : "DMZPublicNACL"},
+                "PortRange" : {"From" : "1024", "To" : "65535"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "130"
+            }
+        },
+        "DMZPublicSubnetsNACLEgress100" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "DMZPublicNACL", 
+            "Properties" : {
+                "CidrBlock" : "0.0.0.0/0",
+                "Egress" : true,
+                "NetworkAclId" : {"Ref" : "DMZPublicNACL"},
+                "PortRange" : {"From" : "22", "To" : "22"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "100"
+            }
+        },
+        "DMZPublicSubnetsNACLEgress110" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "DMZPublicNACL", 
+            "Properties" : {
+                "CidrBlock" : "0.0.0.0/0",
+                "Egress" : true,
+                "NetworkAclId" : {"Ref" : "DMZPublicNACL"},
+                "PortRange" : {"From" : "80", "To" : "80"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "110"
+            }
+        },
+        "DMZPublicSubnetsNACLEgress120" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "DMZPublicNACL", 
+            "Properties" : {
+                "CidrBlock" : "0.0.0.0/0",
+                "Egress" : true,
+                "NetworkAclId" : {"Ref" : "DMZPublicNACL"},
+                "PortRange" : {"From" : "443", "To" : "443"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "120"
+            }
+        },
+        "DMZPublicSubnetsNACLEgress130" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "DMZPublicNACL", 
+            "Properties" : {
+                "CidrBlock" : "0.0.0.0/0",
+                "Egress" : true,
+                "NetworkAclId" : {"Ref" : "DMZPublicNACL"},
+                "PortRange" : {"From" : "1024", "To" : "65535"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "130"
+            }
+        },
+        "AppLayerNACL" : {
+            "Type" : "AWS::EC2::NetworkAcl",
+            "Properties" : {
+                "Tags" : [ {"Key" : "Name", "Value" : "AppLayer-Private-Subnets-NACL"} ],
+                "VpcId" : {"Ref" : "VPC"}
+            }
+        },
+        "AppLayer1NACLAssociation" : {
+            "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+            "DependsOn" : "AppLayerNACL",
+            "Properties" : {
+                "NetworkAclId" : {"Ref" : "AppLayerNACL"},
+                "SubnetId" : {"Ref" : "AppLayer1Private"}
+            }
+        },
+        "AppLayer2NACLAssociation" : {
+            "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+            "DependsOn" : "AppLayerNACL",
+            "Properties" : {
+                "NetworkAclId" : {"Ref" : "AppLayerNACL"},
+                "SubnetId" : {"Ref" : "AppLayer2Private"}
+            }
+        },
+        "AppLayerPrivateSubnetsNACLIngress100" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "AppLayerNACL", 
+            "Properties" : {
+                "CidrBlock" : "10.0.0.0/16",
+                "Egress" : false,
+                "NetworkAclId" : {"Ref" : "AppLayerNACL"},
+                "PortRange" : {"From" : "22", "To" : "22"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "100"
+            }
+        },
+        "AppLayerPrivateSubnetsNACLIngress110" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "AppLayerNACL", 
+            "Properties" : {
+                "CidrBlock" : "10.0.0.0/16",
+                "Egress" : false,
+                "NetworkAclId" : {"Ref" : "AppLayerNACL"},
+                "PortRange" : {"From" : "80", "To" : "80"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "110"
+            }
+        },
+        "AppLayerPrivateSubnetsNACLIngress120" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "AppLayerNACL", 
+            "Properties" : {
+                "CidrBlock" : "10.0.0.0/0",
+                "Egress" : false,
+                "NetworkAclId" : {"Ref" : "AppLayerNACL"},
+                "PortRange" : {"From" : "443", "To" : "443"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "120"
+            }
+        },
+        "AppLayerPrivateSubnetsNACLIngress130" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "AppLayerNACL", 
+            "Properties" : {
+                "CidrBlock" : "0.0.0.0/0",
+                "Egress" : false,
+                "NetworkAclId" : {"Ref" : "AppLayerNACL"},
+                "PortRange" : {"From" : "1024", "To" : "65535"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "130"
+            }
+        },
+        "AppLayerPrivateSubnetsNACLEgress100" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "AppLayerNACL", 
+            "Properties" : {
+                "CidrBlock" : "0.0.0.0/0",
+                "Egress" : true,
+                "NetworkAclId" : {"Ref" : "AppLayerNACL"},
+                "PortRange" : {"From" : "22", "To" : "22"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "100"
+            }
+        },
+        "AppLayerPrivateSubnetsNACLEgress110" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "AppLayerNACL", 
+            "Properties" : {
+                "CidrBlock" : "0.0.0.0/0",
+                "Egress" : true,
+                "NetworkAclId" : {"Ref" : "AppLayerNACL"},
+                "PortRange" : {"From" : "80", "To" : "80"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "110"
+            }
+        },
+        "AppLayerPrivateSubnetsNACLEgress120" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "AppLayerNACL", 
+            "Properties" : {
+                "CidrBlock" : "0.0.0.0/0",
+                "Egress" : true,
+                "NetworkAclId" : {"Ref" : "AppLayerNACL"},
+                "PortRange" : {"From" : "443", "To" : "443"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "120"
+            }
+        },
+        "AppLayerPrivateSubnetsNACLEgress130" : {
+            "Type" : "AWS::EC2::NetworkAclEntry",
+            "DependsOn" : "AppLayerNACL", 
+            "Properties" : {
+                "CidrBlock" : "10.0.0.0/16",
+                "Egress" : true,
+                "NetworkAclId" : {"Ref" : "AppLayerNACL"},
+                "PortRange" : {"From" : "1024", "To" : "65535"},
+                "Protocol" : "6",
+                "RuleAction" : "allow",
+                "RuleNumber" : "130"
+            }
+        },
+        "ALB" : {
+            "Type" : "AWS::ElasticLoadBalancingV2::LoadBalancer",
+            "Properties" : {
+                "IpAddressType" : "ipv4",
+                "Name" : "AplicationLoadBalancer",
+                "Scheme" : "internet-facing",
+                "SecurityGroups" : [ {"Ref" : "ALBSG"} ],
+                "Subnets" : [ {"Ref" : "DMZ1Public"}, {"Ref" : "DMZ2Public"} ],
+                "Type" : "application"
+            }
+        },
+        "Listener": {
+            "Type": "AWS::ElasticLoadBalancingV2::Listener",
+            "Properties": {
+                "DefaultActions": [
+                    {
+                        "Type": "forward",
+                        "TargetGroupArn": {"Ref" : "TargeGroup"}
+                    }
+                ],
+                "LoadBalancerArn": {"Ref": "ALB"},
+                "Port": 80,
+                "Protocol": "HTTP"
+            }
+        },
+        "TargeGroup" : {
+            "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
+            "Properties" : {
+                "HealthCheckEnabled" : true,
+                "HealthCheckIntervalSeconds" : 10,
+                "HealthCheckPath" : "/",
+                "HealthCheckPort" : 80,
+                "HealthCheckProtocol" : "HTTP",
+                "HealthyThresholdCount" : 2,
+                "Name" : "TargetGroup",
+                "Port" : 80,
+                "Protocol" : "HTTP",
+                "Tags" : [ {"Key" : "Name", "Value" : "Instance-Target-Group"} ],
+                "TargetType" : "instance",
+                "UnhealthyThresholdCount" : 2,
+                "VpcId" : {"Ref" : "VPC"}
+            }
+        },
+        "LaunchConfiguration" : {
+            "Type" : "AWS::AutoScaling::LaunchConfiguration",
+            "Properties" : {
+                "AssociatePublicIpAddress" : false,
+                "InstanceMonitoring": "true",
+                "ImageId" : "ami-0dd0ccab7e2801812",
+                "InstanceType" : "t2.micro",
+                "KeyName" : {"Ref" : "WebServerKey"},
+                "PlacementTenancy" : "default",
+                "SecurityGroups" : [ {"Ref" : "AppServerSG"} ],
+                "UserData" : {
+                    "Fn::Base64" : {
+                        "Fn::Join" : [
+                            "",
+                            [
+                            "#!/bin/bash\n",
+                            "yum update -y\n",
+                            "wget http://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm\n",
+                            "yum localinstall -y mysql57-community-release-el7-8.noarch.rpm\n",
+                            "yum install -y mysql-community-server\n",
+                            "yum install -y httpd php php-mysqlnd git\n",
+                            "cd /var/www/html\n",
+                            "wget https://wordpress.org/wordpress-5.1.1.tar.gz\n",
+                            "tar -xzf wordpress-5.1.1.tar.gz\n",
+                            "cp wordpress/wp-config-sample.php wp-config.php\n",
+                            "echo '<?php phpinfo(); ?>' > /var/www/html/phpinfo.php\n",
+                            "echo 'Hello World' > /var/www/html/index.html\n",
+                            "groupadd www\n",
+                            "usermod -aG www ec2-user\n",
+                            "chown -R root:www /var/www\n",
+                            "service httpd start\n",
+                            "chkconfig httpd on\n",
+                            "service mysqld start\n",
+                            "chkconfig mysqld on\n",
+                            "service httpd restart\n",
+                            "service mysqld restart"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "AutoScalingGroup" : {
+            "Type" : "AWS::AutoScaling::AutoScalingGroup",
+            "DependsOn" : "ALB",
+            "Properties" : {
+                "AutoScalingGroupName" : "AppLayer-Auto-Scaling-Group",
+                "Cooldown" : "300",
+                "DesiredCapacity" : "3",
+                "HealthCheckType" : "ELB",
+                "HealthCheckGracePeriod" : 300,
+                "LaunchConfigurationName" : {"Ref" : "LaunchConfiguration"},
+                "MaxSize" : "5",
+                "MinSize" : "2",
+                "Tags" : [ {"PropagateAtLaunch": true, "Key" : "Name", "Value" : "Instance-WordPress"} ],
+                "TargetGroupARNs" : [ {"Ref" : "TargeGroup"} ],
+                "VPCZoneIdentifier" : [ {"Ref" : "AppLayer1Private"}, {"Ref" : "AppLayer2Private"} ]
+            }
+        },
+        "BastionInstance": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "ImageId": "ami-0dd0ccab7e2801812",
+                "InstanceType": "t2.micro",
+                "KeyName": {"Ref": "WebServerKey"},
+                "NetworkInterfaces": [
+                    {"GroupSet": [{"Ref": "BastionHostSG"}],
+                    "AssociatePublicIpAddress": "true",
+                    "DeviceIndex": "0",
+                    "DeleteOnTermination": "true",
+                    "SubnetId": {"Ref" : "DMZ1Public"}}
+                ],
+                "Tags": [ {"Key": "Name", "Value": "bastion-host"} ]
+            }
+        },
+        "ASGCPUPolicy" : {
+            "Type" : "AWS::AutoScaling::ScalingPolicy",
+            "Properties" : {
+                "AdjustmentType" : " PercentChangeInCapacity",
+                "AutoScalingGroupName" : {"Ref" : "AutoScalingGroup"},
+                "PolicyType" : "TargetTrackingScaling",
+                "TargetTrackingConfiguration" : {
+                    "TargetValue": 40.0,
+                    "PredefinedMetricSpecification" : {
+                        "PredefinedMetricType" : "ASGAverageCPUUtilization"
+                    }
+                }
+            }
+         }          
+    }
+}

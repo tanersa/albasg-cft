@@ -1,0 +1,42 @@
+name: cft-alb
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    
+jobs:
+  cft-actions:
+    name: cft-alb
+    runs-on: self-hosted
+
+    steps:
+
+    - name: checkout repository
+      uses: actions/checkout@master
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_ACCESS_SECRET_KEY_ID }}
+        aws-region: us-east-1
+
+    - name: Install AWS CLI on Ubuntu
+      run: curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+    - name: Install uznip package
+      run: sudo apt-get install unzip -y 
+
+    - name: Unzip AWS CLI packages
+      run: unzip awscliv2.zip
+
+    - name: Start the command
+      run: sudo ./aws/install --update
+
+    - name: Deploy CFT to AWS 
+      run: aws cloudformation deploy --template-file albasg-cft-v1.json --stack-name alb-stack --parameter-overrides WebServerKeyName=bastion --region us-east-2
+
+    - name: Show stack output in console
+      run: aws cloudformation describe-stack-events --stack-name alb-stack --region us-east-2
