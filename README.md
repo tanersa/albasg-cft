@@ -13,6 +13,7 @@
             "Type": "AWS::EC2::KeyPair::KeyName"
        
        
+       
   Now, lets start adding our resources...
   
   As a first resource, we can add our VPC in infrastructure which will allow us to achieve network isolation. For VPC, all the IP addresses should be on specific range so we put our CIDR block for that. These IP addresses will help the computers to communicate to each other. Tags could be added to name our VPC. 
