@@ -1,4 +1,4 @@
-                      *** STEPS TO CREATE CLOUD FORMATION TEMPLATE (CFT) ***
+                      *** STEPS TO CREATE CLOUD FORMATION TEMPLATE (CFT) AND CI/CD USING GITHUB AGENT ***
   ![alt text](https://github.com/tanersa/albasg-cft/blob/master/diagram/CloudFormationConcept.png)
   
   Our main goal is to have immutable infrastructure, so we build our VPC in order to achieve network isolation. Therefore, the highest priority in Software Development Life Cycle is the SECURITY! Cloudformation will provison our infrastructure. Eventually, CFT will be used to create a stack. We usually use json/ymal format for creating CFT. 
