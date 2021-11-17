@@ -36,7 +36,7 @@ jobs:
       run: sudo ./aws/install --update
 
     - name: Deploy CFT to AWS 
-      run: aws cloudformation deploy --template-file albasg-cft-v1.json --stack-name alb-stack --parameter-overrides WebServerKeyName=bastion --region us-east-2
-
+      run: aws cloudformation deploy --template-file albasg-cft-v1.json --stack-name alb-stack --parameter-overrides WebServerKeyName=demo 
+      
     - name: Show stack output in console
-      run: aws cloudformation describe-stack-events --stack-name alb-stack --region us-east-2
+      run: aws cloudformation describe-stack-events --stack-name alb-stack 
