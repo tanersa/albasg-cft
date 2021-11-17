@@ -1,4 +1,8 @@
-                      *** STEPS TO CREATE CLOUD FORMATION TEMPLATE (CFT) AND CI/CD USING GITHUB AGENT ***
+   ## STEPS TO CREATE CLOUD FORMATION TEMPLATE (CFT) AND
+   ## CI/CD USING GITHUB AGENT 
+                      
+  
+  
   ![alt text](https://github.com/tanersa/albasg-cft/blob/master/diagram/CloudFormationConcept.png)
   
   Our main goal is to have immutable infrastructure, so we build our VPC in order to achieve network isolation. Therefore, the highest priority in Software Development Life Cycle is the SECURITY! Cloudformation will provison our infrastructure. Eventually, CFT will be used to create a stack. We usually use json/ymal format for creating CFT. 
@@ -463,12 +467,40 @@
                 }
             }
          }  
-        
+         
+###### STEPS TO CONFIGURE GITHUB AGENT BEFORE CI/CD 
 
+1.  Go to Github and click on **_Actions_** tab then click on **_New Workflow_**
+2.  Click on **_"Set up this workflow"_** and give a name for your yaml file..
+3.  Paste your yaml script inside .yml file so each time there is a push on master branch and pull request is done then run this code again and CI/CD pipeline gets     triggerred automatically.
+4.  Click on **_"Start Commit"_** and put your commit message and commit changes. 
+
+Here, we are deploying everything in CI/CD pipeline so all deployment process continously get triggered. 
+
+###### Continious Integration - Continous Development - Continous Deployment
+
+Our main goal is to find the bugs as early as possible!
     
-        
-        
-        
+5. Then add your **_Access_Key_ID_** and **_Secret_Key_ID_**, so go to **Settings** and click on **Secrets**
+6. Then click on **New Repository Secret**. Name your Access Key ID then paste your Accces Key ID which is provided when user role is created in **CSV** file.
+7. Click on **Add Secret** then your Access Key ID will be stored.
+8. Then do the same steps to store **Secret Key ID**.
+9. Now, lets go ahead and add our agent.
+10. Add Ubuntu instance to your infrastructure and spin up our machine. 
+11. Wait for your instance to be initialized completely.
+12. Once our instance is initialized we can go to terminal and ssh to our instance.
+13. Meanwhile, go to Github and continue configuring your agent.
+14. Go to **Settings** under your repository and click on **Actions**
+15. Click on **Runners** and **_new_self_hosted_runner_** top right corner.
+16. Since we chose Ubuntu as our instance, choose **Linux** option in the middlle.
+17. Check your instance on AWS Console, and follow all commands on Github page if your instance is up and running. 
+18. In order to shh to your instance, take **public ip adress** of your instance and go to terminal.
+19. Go to terminal and **ssh to your instance**:  ssh -i ~/Downloads/demo.pem ubuntu@3.93.21.127
+20. After you are able to go to inside your instance follow all the commands on Github to configure your agent.
+21. If you did not install AWS cli on your instance, you need to do that before running CI/CD pipeline.
+22. Once you get **Settings** saved on your instance, your run "./run.sh" command to run your CI/CD.
+23. Then if you make any dummy change to your json file which has your CFT then push it to remote repo, your job will start running and so CI/CD.
+
         
         
   
