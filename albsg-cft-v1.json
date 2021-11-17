@@ -573,7 +573,6 @@
                 "Tags": [ {"Key": "Name", "Value": "bastion-host"} ]
             }
         },
-        
         "ASGCPUPolicy" : {
             "Type" : "AWS::AutoScaling::ScalingPolicy",
             "Properties" : {
