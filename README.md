@@ -468,7 +468,7 @@
             }
          }  
          
-###### STEPS TO CONFIGURE GITHUB AGENT BEFORE CI/CD 
+###### STEPS TO CONFIGURE GITHUB AGENT AND CI/CD 
 
 1.  Go to Github and click on **_Actions_** tab then click on **_New Workflow_**
 2.  Click on **_"Set up this workflow"_** and give a name for your yaml file..
