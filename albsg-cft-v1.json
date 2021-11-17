@@ -216,14 +216,6 @@
                 "VpcId" : {"Ref" : "VPC"}
             }
         },
-        "DMZ1NACLAssociation" : {
-            "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
-            "DependsOn" : "DMZPublicNACL",
-            "Properties" : {
-                "NetworkAclId" : {"Ref" : "DMZPublicNACL"},
-                "SubnetId" : {"Ref" : "DMZ1Public"}
-            }
-        },
         "DMZ2NACLAssociation" : {
             "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
             "DependsOn" : "DMZPublicNACL",
@@ -581,6 +573,7 @@
                 "Tags": [ {"Key": "Name", "Value": "bastion-host"} ]
             }
         },
+        
         "ASGCPUPolicy" : {
             "Type" : "AWS::AutoScaling::ScalingPolicy",
             "Properties" : {
