@@ -498,6 +498,7 @@ Our main goal is to find the bugs as early as possible!
 19. Go to terminal and **ssh to your instance**:  ssh -i ~/Downloads/demo.pem ubuntu@publicIP
       - If you get bad permissions after doing ssh to your instance, you need to change mode to read only for the key
           and run the **command:** chmod 400 ~/Downloads/pemfilename.pem
+      - Check the permissions with the **command:** ls -l ~/Downloads/pemfilename.pem
 21. After you are able to go to inside your instance follow all the commands on Github to configure your agent.
 22. If you did not install **aws cli** on your instance, you need to do that before running CI/CD pipeline.
 23. Once you get **Settings** saved on your instance, your run "./run.sh" command to run your CI/CD.
