@@ -505,7 +505,7 @@
             "Properties" : {
                 "AssociatePublicIpAddress" : false,
                 "InstanceMonitoring": "true",
-                "ImageId" : "ami-0dd0ccab7e2801812",
+                "ImageId" : "ami-0279c3b3186e54acd",
                 "InstanceType" : "t2.micro",
                 "KeyName" : {"Ref" : "WebServerKey"},
                 "PlacementTenancy" : "default",
@@ -562,7 +562,7 @@
         "BastionInstance": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
-                "ImageId": "ami-0dd0ccab7e2801812",
+                "ImageId": "ami-0279c3b3186e54acd",
                 "InstanceType": "t2.micro",
                 "KeyName": {"Ref": "WebServerKey"},
                 "NetworkInterfaces": [
