@@ -6,7 +6,7 @@
             "Type": "AWS::EC2::KeyPair::KeyName"
         }
     },
-    
+
     "Resources" : {
         "VPC":{
             "Type" : "AWS::EC2::VPC",
@@ -576,7 +576,6 @@
                 "Tags": [ {"Key": "Name", "Value": "bastion-host"} ]
             }
         },
-
         "ASGCPUPolicy" : {
             "Type" : "AWS::AutoScaling::ScalingPolicy",
             "Properties" : {
