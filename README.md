@@ -497,7 +497,7 @@ Our main goal is to find the bugs as early as possible!
 18. In order to shh to your instance, take **public ip adress** of your instance and go to terminal.
 19. Go to terminal and **ssh to your instance**:  ssh -i ~/Downloads/demo.pem ubuntu@3.93.21.127
 20. After you are able to go to inside your instance follow all the commands on Github to configure your agent.
-21. If you did not install AWS cli on your instance, you need to do that before running CI/CD pipeline.
+21. If you did not install **aws cli** on your instance, you need to do that before running CI/CD pipeline.
 22. Once you get **Settings** saved on your instance, your run "./run.sh" command to run your CI/CD.
 23. Then if you make any dummy change to your json file which has your CFT then push it to remote repo, your job will start running and so CI/CD.
 
