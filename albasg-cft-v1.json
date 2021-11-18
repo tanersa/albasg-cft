@@ -500,6 +500,7 @@
                 "VpcId" : {"Ref" : "VPC"}
             }
         },
+        
         "LaunchConfiguration" : {
             "Type" : "AWS::AutoScaling::LaunchConfiguration",
             "Properties" : {
