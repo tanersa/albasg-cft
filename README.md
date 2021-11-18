@@ -504,6 +504,15 @@ Our main goal is to find the bugs as early as possible!
 23. Once you get **Settings** saved on your instance, your run "./run.sh" command to run your CI/CD.
 24. Then if you make any dummy change to your json file which has your CFT then push it to remote repo, your job will start running and so CI/CD.
 
+###### How To Check Whether Your Application Is Running?
+
+         After successfully complete your CI/CD job, it is verifiable that your application is up and running online. 
+      To do that, go to your Application Load Balancer (ALB) service then expand below section of the page where 
+      description is placed. Afterwards, copy DNS name and paste it to your browser.
+      
+      If you see the same message on the screen as in your Launch Configuration resource in CFT json file. Then it 
+      means your application is up and running!
+
         
         
   
