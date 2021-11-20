@@ -6,6 +6,7 @@ on:
       - master
   pull_request:
     
+
 jobs:
   cft-actions:
     name: cft-alb
@@ -36,7 +37,7 @@ jobs:
       run: sudo ./aws/install --update
 
     - name: Deploy CFT to AWS 
-      run: aws cloudformation deploy --template-file albasg-cft-v1.json --stack-name alb-stack --parameter-overrides WebServerKey=cicd 
+      run: aws cloudformation deploy --template-file albasg-cft-v1.json --stack-name alb-stack --parameter-overrides WebServerKey=cicd2 
       
 
     - name: Show stack output in console
