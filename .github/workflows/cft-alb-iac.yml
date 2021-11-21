@@ -24,7 +24,7 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_ACCESS_SECRET_KEY_ID }}
         aws-region: us-east-1
 
-    - name: Install AWS CLI on Ubuntu
+    - name: Install AWS CLI on Linux
       run: curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 
     - name: Install uznip package on Linux
