@@ -27,7 +27,7 @@ jobs:
     - name: Install AWS CLI on Ubuntu
       run: curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 
-    - name: Install uznip package
+    - name: Install uznip package on Linux
       run: sudo yum install unzip -y 
 
     - name: Unzip AWS CLI packages
