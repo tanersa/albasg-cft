@@ -495,8 +495,8 @@ Our main goal is to find the bugs as early as possible!
 17. Check your instance on AWS Console, and follow all commands on Github page if your instance is up and running. 
 18. In order to shh to your instance, take **public ip adress** of your instance and go to terminal.
 19. Go to terminal and **ssh to your instance**:  ssh -i ~/Downloads/demo.pem ubuntu@publicIP
-      - If you get bad permissions after doing ssh to your instance, you need to lock-down the permissions to read only on pem file. 
-          and run the **command:** chmod 400 ~/Downloads/pemfilename.pem
+      - If you get bad permissions after doing ssh to your instance, you need to lock-down the permissions to read only on pem file 
+        and run the **command:** chmod 400 ~/Downloads/pemfilename.pem
       - Check the permissions with the **command:** ls -l ~/Downloads/pemfilename.pem
 21. After you are able to go to inside your instance follow all the commands on Github to configure your agent.
 22. If you did not install **aws cli** on your instance, you need to do that before running CI/CD pipeline.
