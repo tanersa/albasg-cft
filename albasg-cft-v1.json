@@ -2,7 +2,7 @@
     "AWSTemplateFormatVersion": "2010-09-09",
     "Parameters": {
         "WebServerKey": {
-            "Description": "This Key will be used to SSH into EC2 instances",
+            "Description": "This Key will be used to SSH into our EC2 instances",
             "Type": "AWS::EC2::KeyPair::KeyName"
         }
     },
