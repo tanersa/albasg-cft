@@ -17,6 +17,7 @@
                 "Tags" : [ {"Key" : "Name", "Value":"BlogVPC"} ]
             }
         },
+        
         "DMZ1Public" : {
             "Type" : "AWS::EC2::Subnet",
             "Properties" : {
