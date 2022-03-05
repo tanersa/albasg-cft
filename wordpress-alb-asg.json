@@ -421,6 +421,7 @@
                 "CidrBlock": "0.0.0.0/0"
             }
         },
+        
         "DMZNACLEntryEgress130": {
             "Type": "AWS::EC2::NetworkAclEntry",
             "DependsOn": "DMZNACL",
